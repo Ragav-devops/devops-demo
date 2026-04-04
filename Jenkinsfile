@@ -8,15 +8,12 @@ pipeline {
             }
         }
 
-        stage('Docker Login') {
+        stage('Docker Login & Push') {
             steps {
-                sh 'docker login -u ragav5 -p Raga@apr5'
-            }
-        }
-
-        stage('Docker Push') {
-            steps {
-                sh 'docker push ragav5/devops-demo'
+                withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh 'docker login -u $USER -p $PASS'
+                    sh 'docker push ragav5/devops-demo'
+                }
             }
         }
     }
