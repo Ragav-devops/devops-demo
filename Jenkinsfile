@@ -4,13 +4,19 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'echo Build started'
+                sh 'echo Building application'
             }
         }
 
-        stage('Test') {
+        stage('Docker Build') {
             steps {
-                sh 'echo Running tests'
+                sh 'docker build -t devops-demo .'
+            }
+        }
+
+        stage('Docker Run') {
+            steps {
+                sh 'docker run -d -p 8081:80 devops-demo'
             }
         }
     }
