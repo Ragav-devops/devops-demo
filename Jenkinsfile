@@ -2,15 +2,15 @@ pipeline {
     agent any
 
     stages {
-        stage('Build') {
-            steps {
-                sh 'echo Building application'
-            }
-        }
-
         stage('Docker Build') {
             steps {
                 sh 'docker build -t ragav5/devops-demo .'
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                sh 'docker login -u ragav5 -p Raga@apr5'
             }
         }
 
