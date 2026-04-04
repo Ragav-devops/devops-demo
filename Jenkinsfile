@@ -10,13 +10,13 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t devops-demo .'
+                sh 'docker build -t ragav5/devops-demo .'
             }
         }
 
-        stage('Docker Run') {
+        stage('Docker Push') {
             steps {
-                sh 'docker run -d -p 8081:80 devops-demo'
+                sh 'docker push ragav5/devops-demo'
             }
         }
     }
