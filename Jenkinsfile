@@ -19,12 +19,12 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
-    steps {
-        withCredentials([string(credentialsId: 'k8s-token', variable: 'K8S_TOKEN')]) {
-            sh '''
-            mkdir -p $HOME/.kube
+            steps {
+                withCredentials([string(credentialsId: 'k8s-token', variable: 'K8S_TOKEN')]) {
+                    sh '''
+                    mkdir -p $HOME/.kube
 
-            cat <<EOF > $HOME/.kube/config
+                    cat <<EOF > $HOME/.kube/config
 apiVersion: v1
 kind: Config
 clusters:
@@ -44,9 +44,19 @@ users:
     token: $K8S_TOKEN
 EOF
 
-            kubectl apply -f deployment.yaml --validate=false
-            kubectl apply -f service.yaml --validate=false
-            '''
+                    kubectl apply -f deployment.yaml --validate=false
+                    kubectl apply -f service.yaml --validate=false
+                    '''
+                }
+            }
         }
+
+        stage('Verify Deployment') {
+            steps {
+                sh 'kubectl get pods'
+                sh 'kubectl get svc'
+            }
+        }
+
     }
 }
