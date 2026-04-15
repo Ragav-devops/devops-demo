@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: devops-demo-deployment
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: devops-demo
+
+  template:
+    metadata:
+      labels:
+        app: devops-demo
+
+    spec:
+      containers:
+      - name: devops-container
+        image: ragav5/devops-demo:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
