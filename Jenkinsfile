@@ -1,19 +1,26 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "ragav5/devops-demo"
+        KUBE_SERVER = "https://host.docker.internal:60631"
+    }
+
     stages {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ragav5/devops-demo .'
+                sh 'docker build -t $IMAGE_NAME .'
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh 'echo $PASS | docker login -u $USER --password-stdin'
-                    sh 'docker push ragav5/devops-demo'
+                    sh '''
+                    echo $PASS | docker login -u $USER --password-stdin
+                    docker push $IMAGE_NAME
+                    '''
                 }
             }
         }
@@ -28,15 +35,15 @@ pipeline {
 apiVersion: v1
 kind: Config
 clusters:
-- cluster:
-    server: https://host.docker.internal:60631
+- name: kubernetes
+  cluster:
+    server: $KUBE_SERVER
     insecure-skip-tls-verify: true
-  name: kubernetes
 contexts:
-- context:
+- name: jenkins-context
+  context:
     cluster: kubernetes
     user: jenkins
-  name: jenkins-context
 current-context: jenkins-context
 users:
 - name: jenkins
@@ -44,6 +51,12 @@ users:
     token: $K8S_TOKEN
 EOF
 
+                    export KUBECONFIG=$HOME/.kube/config
+
+                    echo "Checking cluster access..."
+                    kubectl get nodes
+
+                    echo "Deploying to Kubernetes..."
                     kubectl apply -f deployment.yaml --validate=false
                     kubectl apply -f service.yaml --validate=false
                     '''
@@ -53,10 +66,11 @@ EOF
 
         stage('Verify Deployment') {
             steps {
-                sh 'kubectl get pods'
-                sh 'kubectl get svc'
+                sh '''
+                kubectl get pods
+                kubectl get svc
+                '''
             }
         }
-
     }
 }
