@@ -22,7 +22,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'k8s-token', variable: 'K8S_TOKEN')]) {
                     sh '''
-                    kubectl config set-cluster k8s-cluster --server=https://127.0.0.1:60631 --insecure-skip-tls-verify=true
+                    kubectl config set-cluster k8s-cluster --server=https://host.docker.internal:60631 --insecure-skip-tls-verify=true
                     kubectl config set-credentials jenkins --token=$K8S_TOKEN
                     kubectl config set-context jenkins-context --cluster=k8s-cluster --user=jenkins
                     kubectl config use-context jenkins-context
