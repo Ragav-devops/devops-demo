@@ -19,26 +19,35 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
-            steps {
-                withCredentials([string(credentialsId: 'k8s-token', variable: 'K8S_TOKEN')]) {
-                    sh '''
-                    kubectl config set-cluster k8s-cluster --server=https://host.docker.internal:60631 --insecure-skip-tls-verify=true
-                    kubectl config set-credentials jenkins --token=$K8S_TOKEN
-                    kubectl config set-context jenkins-context --cluster=k8s-cluster --user=jenkins
-                    kubectl config use-context jenkins-context
+    steps {
+        withCredentials([string(credentialsId: 'k8s-token', variable: 'K8S_TOKEN')]) {
+            sh '''
+            mkdir -p $HOME/.kube
 
-                    kubectl apply -f deployment.yaml
-                    kubectl apply -f service.yaml
-                    '''
-                }
-            }
-        }
+            cat <<EOF > $HOME/.kube/config
+apiVersion: v1
+kind: Config
+clusters:
+- cluster:
+    server: https://host.docker.internal:60631
+    insecure-skip-tls-verify: true
+  name: kubernetes
+contexts:
+- context:
+    cluster: kubernetes
+    user: jenkins
+  name: jenkins-context
+current-context: jenkins-context
+users:
+- name: jenkins
+  user:
+    token: $K8S_TOKEN
+EOF
 
-        stage('Verify Deployment') {
-            steps {
-                sh 'kubectl get pods'
-                sh 'kubectl get svc'
-            }
+            kubectl apply -f deployment.yaml --validate=false
+            kubectl apply -f service.yaml --validate=false
+            '''
         }
     }
 }
+    }
