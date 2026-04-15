@@ -2,25 +2,42 @@ pipeline {
     agent any
 
     stages {
-        stage('Docker Build') {
+
+        stage('Build Docker Image') {
             steps {
                 sh 'docker build -t ragav5/devops-demo .'
             }
         }
 
-        stage('Docker Push') {
+        stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh 'docker login -u $USER -p $PASS'
+                    sh 'echo $PASS | docker login -u $USER --password-stdin'
                     sh 'docker push ragav5/devops-demo'
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy to Kubernetes') {
             steps {
-                sh 'docker pull ragav5/devops-demo'
-                sh 'docker run -d -p 8083:80 ragav5/devops-demo'
+                withCredentials([string(credentialsId: 'k8s-token', variable: 'K8S_TOKEN')]) {
+                    sh '''
+                    kubectl config set-cluster k8s-cluster --server=https://127.0.0.1:60631 --insecure-skip-tls-verify=true
+                    kubectl config set-credentials jenkins --token=$K8S_TOKEN
+                    kubectl config set-context jenkins-context --cluster=k8s-cluster --user=jenkins
+                    kubectl config use-context jenkins-context
+
+                    kubectl apply -f deployment.yaml
+                    kubectl apply -f service.yaml
+                    '''
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh 'kubectl get pods'
+                sh 'kubectl get svc'
             }
         }
     }
