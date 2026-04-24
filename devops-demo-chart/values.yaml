@@ -1,0 +1,8 @@
+replicaCount: 2
+
+image:
+  repository: ragav5/devops-demo
+  tag: latest
+
+service:
+  type: NodePort
